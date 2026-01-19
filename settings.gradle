@@ -12,7 +12,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'MCNDI'
+rootProject.name = 'MCNDI2'
 include("Common", "Fabric")
 // Forge is temporarily disabled for 1.21.8 update
 // include("Forge")

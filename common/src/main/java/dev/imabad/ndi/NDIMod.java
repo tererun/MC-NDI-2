@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public class NDIMod {
 
-    public static final String MOD_ID = "mcndi";
+    public static final String MOD_ID = "mcndi2";
 
     private static CameraManager cameraManager;
     private static GameRenderHook gameRenderHook;
@@ -94,9 +94,9 @@ public class NDIMod {
         if (ndiAvailable) {
             gameRenderHook = new GameRenderHook("MC - " + sourceName);
         }
-        newCameraKey = new KeyMapping("keys.mcndi.new", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, "NDI");
-        removeCameraMap = new KeyMapping("keys.mcndi.remove", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F, "NDI");
-        openSettingsKey = new KeyMapping("keys.mcndi.settings", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_N, "NDI");
+        newCameraKey = new KeyMapping("keys.mcndi2.new", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, "NDI");
+        removeCameraMap = new KeyMapping("keys.mcndi2.remove", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F, "NDI");
+        openSettingsKey = new KeyMapping("keys.mcndi2.settings", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_N, "NDI");
     }
 
     public static void handleKeybind(Minecraft instance) {
