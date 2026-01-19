@@ -42,11 +42,11 @@ For Windows, Linux, and Intel-based Macs, just build normally - the official Dev
 
 ### Apple Silicon (M1/M2/M3) macOS - Custom Devolay Build Required
 
-The official Devolay library does not include arm64 macOS natives. You need to build a custom version:
+The official Devolay library does not include arm64 macOS natives. Use our fork which includes the necessary modifications:
 
 1. **Clone and build Devolay with arm64 support:**
    ```bash
-   git clone https://github.com/WalkerKnapp/devolay.git
+   git clone https://github.com/tererun/devolay.git
    cd devolay
    
    # Create NDI SDK headers directory
@@ -58,21 +58,7 @@ The official Devolay library does not include arm64 macOS natives. You need to b
    curl -o ndi-sdk/include/Processing.NDI.utilities.h https://raw.githubusercontent.com/obs-ndi/obs-ndi/master/headers/Processing.NDI.utilities.h
    ```
 
-2. **Modify `devolay-natives/build.gradle.kts`** to add arm64 target:
-   ```kotlin
-   // Add in targetMachines:
-   machines.macOS.architecture("arm64")
-   ```
-
-3. **Modify `devolay-java/src/main/java/me/walkerknapp/devolay/Devolay.java`** to detect arm64:
-   ```java
-   // In getArchDirectory() method, change arm64 detection for macOS:
-   if (osArchProperty.contains("aarch64") || ...) {
-       return isMacOS ? "arm64" : "arm64-v8a";  // macOS uses "arm64", Android uses "arm64-v8a"
-   }
-   ```
-
-4. **Build and install to local Maven:**
+2. **Build and install to local Maven:**
    ```bash
    ./gradlew :devolay-natives:build :devolay-java:publishToMavenLocal
    ```
