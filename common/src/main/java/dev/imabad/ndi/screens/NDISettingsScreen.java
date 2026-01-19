@@ -117,16 +117,23 @@ public class NDISettingsScreen extends Screen {
             int entryY = listY + i * LIST_ENTRY_HEIGHT;
             CameraEntity camera = cameras.get(i + scrollOffset);
 
-            // Delete button (check first, rightmost)
-            int delBtnX = listX + listWidth - 35;
-            if (mouseX >= delBtnX && mouseX <= delBtnX + 35 && mouseY >= entryY + 2 && mouseY <= entryY + 18) {
+            // Delete button (rightmost)
+            int delBtnX = listX + listWidth - 25;
+            if (mouseX >= delBtnX && mouseX <= delBtnX + 25 && mouseY >= entryY + 2 && mouseY <= entryY + 18) {
                 deleteCamera(camera);
                 return true;
             }
 
-            // Teleport button
-            int tpBtnX = listX + listWidth - 75;
-            if (mouseX >= tpBtnX && mouseX <= tpBtnX + 35 && mouseY >= entryY + 2 && mouseY <= entryY + 18) {
+            // Move button (camera to player)
+            int mvBtnX = listX + listWidth - 55;
+            if (mouseX >= mvBtnX && mouseX <= mvBtnX + 25 && mouseY >= entryY + 2 && mouseY <= entryY + 18) {
+                teleportCameraToPlayer(camera);
+                return true;
+            }
+
+            // Teleport button (player to camera)
+            int tpBtnX = listX + listWidth - 85;
+            if (mouseX >= tpBtnX && mouseX <= tpBtnX + 25 && mouseY >= entryY + 2 && mouseY <= entryY + 18) {
                 teleportToCamera(camera);
                 return true;
             }
@@ -182,7 +189,28 @@ public class NDISettingsScreen extends Screen {
                 clearGlow();
                 selectedCameraId = null;
             }
+            // Stop NDI threads first
+            UUID uuid = camera.getUUID();
+            if (NDIMod.getCameraManager().cameraControls.containsKey(uuid)) {
+                NDIMod.getCameraManager().cameraControls.get(uuid).end();
+                NDIMod.getCameraManager().cameraControls.remove(uuid);
+            }
+            if (NDIMod.getCameraManager().cameras.containsKey(uuid)) {
+                NDIMod.getCameraManager().cameras.get(uuid).end();
+                NDIMod.getCameraManager().cameras.remove(uuid);
+            }
+            NDIMod.getCameraManager().cameraEntities.remove(camera);
             this.minecraft.level.removeEntity(camera.getId(), Entity.RemovalReason.DISCARDED);
+        }
+    }
+
+    private void teleportCameraToPlayer(CameraEntity camera) {
+        if (this.minecraft != null && this.minecraft.player != null) {
+            camera.setPos(this.minecraft.player.getX(), this.minecraft.player.getY(), this.minecraft.player.getZ());
+            camera.setYRot(this.minecraft.player.getYRot());
+            camera.setXRot(this.minecraft.player.getXRot());
+            camera.setYHeadRot(this.minecraft.player.getYHeadRot());
+            camera.setYBodyRot(this.minecraft.player.yBodyRot);
         }
     }
 
@@ -224,7 +252,14 @@ public class NDISettingsScreen extends Screen {
         guiGraphics.fill(listX - 2, listY - 2, listX + listWidth + 2, listY + listHeight + 2, 0x80000000);
 
         List<CameraEntity> cameras = new ArrayList<>(NDIMod.getCameraManager().cameraEntities);
-        int visibleCount = Math.min(cameras.size() - scrollOffset, MAX_VISIBLE_ENTRIES);
+        
+        // Auto-adjust scroll offset if cameras were removed
+        int maxScroll = Math.max(0, cameras.size() - MAX_VISIBLE_ENTRIES);
+        if (scrollOffset > maxScroll) {
+            scrollOffset = maxScroll;
+        }
+        
+        int visibleCount = Math.min(Math.max(0, cameras.size() - scrollOffset), MAX_VISIBLE_ENTRIES);
 
         for (int i = 0; i < visibleCount; i++) {
             CameraEntity camera = cameras.get(i + scrollOffset);
@@ -233,26 +268,29 @@ public class NDISettingsScreen extends Screen {
 
             // Entry background
             int bgColor = isSelected ? 0x80404080 : 0x40202020;
-            guiGraphics.fill(listX, entryY, listX + listWidth - 80, entryY + LIST_ENTRY_HEIGHT - 2, bgColor);
+            guiGraphics.fill(listX, entryY, listX + listWidth - 90, entryY + LIST_ENTRY_HEIGHT - 2, bgColor);
 
-            // Camera name
-            String name = camera.getDisplayName().getString();
-            if (name.length() > 20) {
-                name = name.substring(0, 17) + "...";
-            }
-            guiGraphics.drawString(this.font, name, listX + 4, entryY + 6, isSelected ? 0xFFFF55 : 0xFFFFFF);
+            // Camera name - always show "Camera N" for display
+            String name = "Camera " + (i + scrollOffset + 1);
+            guiGraphics.drawString(this.font, name, listX + 4, entryY + 6, isSelected ? 0xFFFFFF55 : 0xFFFFFFFF);
 
-            // Teleport button
-            int tpBtnX = listX + listWidth - 75;
-            boolean tpHover = mouseX >= tpBtnX && mouseX <= tpBtnX + 35 && mouseY >= entryY + 2 && mouseY <= entryY + 18;
-            guiGraphics.fill(tpBtnX, entryY + 2, tpBtnX + 35, entryY + 18, tpHover ? 0xFF4488FF : 0xFF2266AA);
-            guiGraphics.drawCenteredString(this.font, "TP", tpBtnX + 17, entryY + 5, 0xFFFFFF);
+            // Teleport button (player to camera)
+            int tpBtnX = listX + listWidth - 85;
+            boolean tpHover = mouseX >= tpBtnX && mouseX <= tpBtnX + 25 && mouseY >= entryY + 2 && mouseY <= entryY + 18;
+            guiGraphics.fill(tpBtnX, entryY + 2, tpBtnX + 25, entryY + 18, tpHover ? 0xFF4488FF : 0xFF2266AA);
+            guiGraphics.drawCenteredString(this.font, "TP", tpBtnX + 13, entryY + 6, 0xFFFFFFFF);
+
+            // Move button (camera to player)
+            int mvBtnX = listX + listWidth - 55;
+            boolean mvHover = mouseX >= mvBtnX && mouseX <= mvBtnX + 25 && mouseY >= entryY + 2 && mouseY <= entryY + 18;
+            guiGraphics.fill(mvBtnX, entryY + 2, mvBtnX + 25, entryY + 18, mvHover ? 0xFF44FF88 : 0xFF22AA66);
+            guiGraphics.drawCenteredString(this.font, "MV", mvBtnX + 13, entryY + 6, 0xFFFFFFFF);
 
             // Delete button
-            int delBtnX = listX + listWidth - 35;
-            boolean delHover = mouseX >= delBtnX && mouseX <= delBtnX + 35 && mouseY >= entryY + 2 && mouseY <= entryY + 18;
-            guiGraphics.fill(delBtnX, entryY + 2, delBtnX + 35, entryY + 18, delHover ? 0xFFFF4444 : 0xFFAA2222);
-            guiGraphics.drawCenteredString(this.font, "X", delBtnX + 17, entryY + 5, 0xFFFFFF);
+            int delBtnX = listX + listWidth - 25;
+            boolean delHover = mouseX >= delBtnX && mouseX <= delBtnX + 25 && mouseY >= entryY + 2 && mouseY <= entryY + 18;
+            guiGraphics.fill(delBtnX, entryY + 2, delBtnX + 25, entryY + 18, delHover ? 0xFFFF4444 : 0xFFAA2222);
+            guiGraphics.drawCenteredString(this.font, "X", delBtnX + 13, entryY + 6, 0xFFFFFFFF);
         }
 
         if (cameras.isEmpty()) {
@@ -267,7 +305,7 @@ public class NDISettingsScreen extends Screen {
         }
 
         // Help text
-        guiGraphics.drawCenteredString(this.font, "Click camera to select/glow | TP=Teleport | X=Delete", centerX, this.height - 20, 0x888888);
+        guiGraphics.drawCenteredString(this.font, "TP=Go to cam | MV=Move cam here | X=Delete", centerX, this.height - 20, 0xFF888888);
     }
 
     @Override
